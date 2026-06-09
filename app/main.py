@@ -52,7 +52,11 @@ async def list_documents(request: Request):
 
 @app.delete("/documents/{filename}")
 async def delete_document(request: Request, filename: str):
-    deleted = request.app.state.rag.delete_document(filename)
+    safe_name = Path(filename).name
+    deleted = request.app.state.rag.delete_document(safe_name)
     if not deleted:
-        raise HTTPException(status_code=404, detail=f"Document '{filename}' not found")
-    return {"message": f"Document '{filename}' deleted"}
+        raise HTTPException(status_code=404, detail=f"Document '{safe_name}' not found")
+    file_path = Path(settings.documents_dir) / safe_name
+    if file_path.exists():
+        file_path.unlink()
+    return {"message": f"Document '{safe_name}' deleted"}

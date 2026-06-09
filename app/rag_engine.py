@@ -1,5 +1,6 @@
 import chromadb
 from itertools import zip_longest
+from pathlib import Path
 from llama_index.core import SimpleDirectoryReader, StorageContext, VectorStoreIndex
 from llama_index.core import Settings
 from llama_index.core.node_parser import SentenceSplitter
@@ -39,6 +40,9 @@ class RAGEngine:
         return VectorStoreIndex.from_vector_store(self.vector_store, storage_context=storage_context)
 
     def ingest_document(self, file_path: str) -> int:
+        filename = Path(file_path).name
+        if filename in self.list_documents():
+            self.delete_document(filename)
         docs = SimpleDirectoryReader(input_files=[file_path]).load_data()
         splitter = SentenceSplitter(chunk_size=cfg.chunk_size, chunk_overlap=cfg.chunk_overlap)
         nodes = splitter.get_nodes_from_documents(docs)
