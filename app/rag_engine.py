@@ -1,4 +1,5 @@
 import chromadb
+from itertools import zip_longest
 from llama_index.core import SimpleDirectoryReader, StorageContext, VectorStoreIndex
 from llama_index.core import Settings
 from llama_index.core.node_parser import SentenceSplitter
@@ -47,7 +48,11 @@ class RAGEngine:
     def query(self, question: str) -> dict:
         engine = self.index.as_query_engine(similarity_top_k=cfg.top_k_results)
         response = engine.query(question)
-        sources = list({node.metadata.get("file_name", "") for node in response.source_nodes})
+        sources = list({
+            node.metadata["file_name"]
+            for node in response.source_nodes
+            if "file_name" in node.metadata
+        })
         return {"answer": str(response), "sources": sources}
 
     def list_documents(self) -> list:
@@ -63,7 +68,7 @@ class RAGEngine:
         results = self.collection.get()
         ids_to_delete = [
             id_
-            for id_, meta in zip(results["ids"], results["metadatas"])
+            for id_, meta in zip_longest(results["ids"], results["metadatas"])
             if meta and meta.get("file_name") == filename
         ]
         if not ids_to_delete:
