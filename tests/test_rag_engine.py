@@ -10,6 +10,7 @@ class TestRAGEngineQuery:
         with patch("app.rag_engine.Groq"), \
              patch("app.rag_engine.Anthropic"), \
              patch("app.rag_engine.HuggingFaceEmbedding"), \
+             patch("app.rag_engine.Settings"), \
              patch("app.rag_engine.chromadb.PersistentClient") as mock_chroma, \
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
@@ -39,6 +40,7 @@ class TestRAGEngineQuery:
         with patch("app.rag_engine.Groq"), \
              patch("app.rag_engine.Anthropic"), \
              patch("app.rag_engine.HuggingFaceEmbedding"), \
+             patch("app.rag_engine.Settings"), \
              patch("app.rag_engine.chromadb.PersistentClient") as mock_chroma, \
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
@@ -70,6 +72,7 @@ class TestRAGEngineIngest:
         with patch("app.rag_engine.Groq"), \
              patch("app.rag_engine.Anthropic"), \
              patch("app.rag_engine.HuggingFaceEmbedding"), \
+             patch("app.rag_engine.Settings"), \
              patch("app.rag_engine.chromadb.PersistentClient") as mock_chroma, \
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
@@ -98,6 +101,7 @@ class TestRAGEngineListDocuments:
         with patch("app.rag_engine.Groq"), \
              patch("app.rag_engine.Anthropic"), \
              patch("app.rag_engine.HuggingFaceEmbedding"), \
+             patch("app.rag_engine.Settings"), \
              patch("app.rag_engine.chromadb.PersistentClient") as mock_chroma, \
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
@@ -126,6 +130,7 @@ class TestRAGEngineDelete:
         with patch("app.rag_engine.Groq"), \
              patch("app.rag_engine.Anthropic"), \
              patch("app.rag_engine.HuggingFaceEmbedding"), \
+             patch("app.rag_engine.Settings"), \
              patch("app.rag_engine.chromadb.PersistentClient") as mock_chroma, \
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
@@ -149,6 +154,7 @@ class TestRAGEngineDelete:
         with patch("app.rag_engine.Groq"), \
              patch("app.rag_engine.Anthropic"), \
              patch("app.rag_engine.HuggingFaceEmbedding"), \
+             patch("app.rag_engine.Settings"), \
              patch("app.rag_engine.chromadb.PersistentClient") as mock_chroma, \
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
