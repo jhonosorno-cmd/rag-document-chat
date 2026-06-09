@@ -9,5 +9,8 @@ data/documents/
 *.egg-info/
 dist/
 test_data/
+*.log
+.claude/
+docs/superpowers/
 !data/documents/.gitkeep
 !storage/chroma/.gitkeep
