@@ -108,3 +108,17 @@ def test_delete_nonexistent_document_returns_404(client):
     response = c.delete("/documents/ghost.pdf")
 
     assert response.status_code == 404
+
+
+def test_upload_with_path_traversal_filename_is_sanitized(client):
+    c, mock_rag = client
+    mock_rag.ingest_document.return_value = 2
+
+    response = c.post(
+        "/upload",
+        files={"file": ("../evil.pdf", io.BytesIO(b"%PDF fake"), "application/pdf")},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["filename"] == "evil.pdf"

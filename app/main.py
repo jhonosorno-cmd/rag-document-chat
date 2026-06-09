@@ -22,17 +22,20 @@ app = FastAPI(title="RAG Document Chat", version="1.0.0", lifespan=lifespan)
 
 @app.post("/upload", response_model=UploadResponse)
 async def upload_document(request: Request, file: UploadFile = File(...)):
-    ext = Path(file.filename).suffix.lower()
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+    safe_name = Path(file.filename).name
+    ext = Path(safe_name).suffix.lower()
     if ext not in _ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=f"Only {_ALLOWED_EXTENSIONS} files are accepted")
 
-    dest = Path(settings.documents_dir) / file.filename
+    dest = Path(settings.documents_dir) / safe_name
     dest.parent.mkdir(parents=True, exist_ok=True)
     with dest.open("wb") as f:
         shutil.copyfileobj(file.file, f)
 
     chunks = request.app.state.rag.ingest_document(str(dest))
-    return UploadResponse(message="Document indexed", filename=file.filename, chunks_created=chunks)
+    return UploadResponse(message="Document indexed", filename=safe_name, chunks_created=chunks)
 
 
 @app.post("/query", response_model=QueryResponse)
