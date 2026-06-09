@@ -8,3 +8,5 @@ data/documents/
 *.egg-info/
 dist/
 test_data/
+!data/documents/.gitkeep
+!storage/chroma/.gitkeep
