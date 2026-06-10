@@ -65,6 +65,67 @@ def init_engine():
         return RAGEngine()
 
 
+def handle_query(engine, question: str):
+    with Live(
+        Spinner("dots2", text=Text(" Pensando...", style="muted")),
+        console=console,
+        transient=True,
+    ):
+        result = engine.query(question)
+
+    console.print()
+    console.print(Panel(
+        Text(result["answer"], style="white"),
+        border_style="blue",
+        box=box.ROUNDED,
+        padding=(1, 2),
+    ))
+    if result["sources"]:
+        joined = "  ".join(f"[source]{s}[/source]" for s in result["sources"])
+        console.print(f"  [muted]fuentes[/muted]  {joined}")
+    console.print()
+
+
+def chat_loop(engine, questions: list):
+    while True:
+        try:
+            user_input = console.input("[prompt] you ›[/prompt] ").strip()
+        except (KeyboardInterrupt, EOFError):
+            console.print()
+            console.print("  [muted]Hasta luego.[/muted]")
+            console.print()
+            break
+
+        if not user_input:
+            continue
+
+        if user_input.startswith("/"):
+            parts = user_input[1:].split(" ", 1)
+            cmd = parts[0].lower()
+            arg = parts[1] if len(parts) > 1 else ""
+
+            if cmd in ("quit", "exit", "q"):
+                console.print()
+                console.print("  [muted]Hasta luego.[/muted]")
+                console.print()
+                break
+            elif cmd == "help":
+                console.print(Panel(HELP_TEXT, border_style="dim", box=box.ROUNDED, padding=(0, 1)))
+                console.print()
+            elif cmd == "clear":
+                console.clear()
+                print_logo()
+            else:
+                console.print(f"  [err]Comando desconocido:[/err] /{cmd}  (escribe /help)")
+                console.print()
+        else:
+            if not engine.list_documents():
+                console.print("  [muted]No hay documentos. Usá /upload <ruta> para subir uno.[/muted]")
+                console.print()
+            else:
+                handle_query(engine, user_input)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Forbin Document Chat")
     parser.add_argument("--demo", choices=["legal", "industrial"],
@@ -85,6 +146,8 @@ def main():
     console.print()
     console.print(Panel(HELP_TEXT, border_style="dim", box=box.ROUNDED, padding=(0, 1)))
     console.print()
+
+    chat_loop(engine, [])
 
 
 if __name__ == "__main__":
