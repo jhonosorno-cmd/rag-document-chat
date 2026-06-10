@@ -115,6 +115,12 @@ def chat_loop(engine, questions: list):
             elif cmd == "clear":
                 console.clear()
                 print_logo()
+            elif cmd == "upload":
+                handle_upload(engine, arg)
+            elif cmd == "list":
+                handle_list(engine)
+            elif cmd == "delete":
+                handle_delete(engine, arg)
             else:
                 console.print(f"  [err]Comando desconocido:[/err] /{cmd}  (escribe /help)")
                 console.print()
@@ -124,6 +130,79 @@ def chat_loop(engine, questions: list):
                 console.print()
             else:
                 handle_query(engine, user_input)
+
+
+def handle_upload(engine, path_str: str):
+    import shutil
+    if not path_str.strip():
+        console.print("  [err]Uso: /upload <ruta>[/err]")
+        console.print()
+        return
+
+    src = Path(path_str.strip())
+    if not src.exists():
+        console.print(f"  [err]Archivo no encontrado:[/err] {src}")
+        console.print()
+        return
+
+    if src.suffix.lower() not in (".pdf", ".txt"):
+        console.print("  [err]Solo se aceptan archivos .pdf y .txt[/err]")
+        console.print()
+        return
+
+    dest = DOCS_DIR / src.name
+    with Live(
+        Spinner("dots", text=Text(f" Ingiriendo {src.name}...", style="muted")),
+        console=console,
+        transient=True,
+    ):
+        shutil.copy2(src, dest)
+        chunks = engine.ingest_document(str(dest))
+
+    console.print(f"  [ok]✓[/ok]  [bold]{src.name}[/bold] — {chunks} chunks creados")
+    console.print()
+
+
+def handle_list(engine):
+    docs = engine.list_documents()
+    if not docs:
+        console.print("  [muted]No hay documentos indexados.[/muted]")
+        console.print()
+        return
+
+    table = Table(box=box.SIMPLE, show_header=True, header_style="dim", padding=(0, 1))
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Documento", style="white")
+    for i, doc in enumerate(sorted(docs), 1):
+        table.add_row(str(i), doc)
+
+    console.print(table)
+    console.print()
+
+
+def handle_delete(engine, name: str):
+    if not name.strip():
+        console.print("  [err]Uso: /delete <nombre-documento>[/err]")
+        console.print()
+        return
+
+    name = name.strip()
+    with Live(
+        Spinner("dots", text=Text(f" Eliminando {name}...", style="muted")),
+        console=console,
+        transient=True,
+    ):
+        deleted = engine.delete_document(name)
+        if deleted:
+            file_path = DOCS_DIR / name
+            if file_path.exists():
+                file_path.unlink()
+
+    if deleted:
+        console.print(f"  [ok]✓[/ok]  Eliminado [bold]{name}[/bold]")
+    else:
+        console.print(f"  [err]No encontrado:[/err] {name}")
+    console.print()
 
 
 def main():
