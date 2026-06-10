@@ -65,6 +65,60 @@ def init_engine():
         return RAGEngine()
 
 
+def load_demo_questions_from_path(path: Path) -> list:
+    if not path.exists():
+        return []
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def load_demo_questions(vertical: str) -> list:
+    return load_demo_questions_from_path(Path(f"demo/{vertical}/preguntas.txt"))
+
+
+def load_demo_docs(engine, vertical: str) -> int:
+    demo_dir = Path(f"demo/{vertical}")
+    files = [
+        f for f in list(demo_dir.glob("*.pdf")) + list(demo_dir.glob("*.txt"))
+        if f.name not in ("preguntas.txt", "README.txt")
+    ]
+    total = 0
+    for f in files:
+        total += engine.ingest_document(str(f))
+    return total
+
+
+def handle_demo(engine, vertical: str) -> list:
+    vertical = vertical.strip().lower()
+    if vertical not in ("legal", "industrial"):
+        console.print(f"  [err]Demo no disponible:[/err] {vertical}  (opciones: legal, industrial)")
+        console.print()
+        return []
+
+    demo_dir = Path(f"demo/{vertical}")
+    if not demo_dir.exists():
+        console.print(f"  [err]Carpeta no encontrada:[/err] demo/{vertical}/")
+        console.print()
+        return []
+
+    with Live(
+        Spinner("dots", text=Text(f" Cargando demo {vertical}...", style="muted")),
+        console=console,
+        transient=True,
+    ):
+        count = load_demo_docs(engine, vertical)
+
+    questions = load_demo_questions(vertical)
+    console.print(f"  [ok]✓[/ok]  Demo [bold]{vertical}[/bold] cargada — {count} chunks")
+
+    if questions:
+        console.print()
+        console.print("  [muted]Preguntas sugeridas:[/muted]")
+        for i, q in enumerate(questions, 1):
+            console.print(f"    [bold cyan]{i}.[/bold cyan] {q}")
+    console.print()
+    return questions
+
+
 def handle_query(engine, question: str):
     with Live(
         Spinner("dots2", text=Text(" Pensando...", style="muted")),
@@ -99,6 +153,13 @@ def chat_loop(engine, questions: list):
         if not user_input:
             continue
 
+        # Number shortcut: typing "1"-"9" sends the corresponding demo question
+        if questions and user_input.isdigit():
+            idx = int(user_input) - 1
+            if 0 <= idx < len(questions):
+                user_input = questions[idx]
+                console.print(f"  [muted]→ {user_input}[/muted]")
+
         if user_input.startswith("/"):
             parts = user_input[1:].split(" ", 1)
             cmd = parts[0].lower()
@@ -121,6 +182,8 @@ def chat_loop(engine, questions: list):
                 handle_list(engine)
             elif cmd == "delete":
                 handle_delete(engine, arg)
+            elif cmd == "demo":
+                questions = handle_demo(engine, arg)
             else:
                 console.print(f"  [err]Comando desconocido:[/err] /{cmd}  (escribe /help)")
                 console.print()
@@ -227,7 +290,11 @@ def main():
     console.print(Panel(HELP_TEXT, border_style="dim", box=box.ROUNDED, padding=(0, 1)))
     console.print()
 
-    chat_loop(engine, [])
+    questions = []
+    if args.demo:
+        questions = handle_demo(engine, args.demo)
+
+    chat_loop(engine, questions)
 
 
 if __name__ == "__main__":
