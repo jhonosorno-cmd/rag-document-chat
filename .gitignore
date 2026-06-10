@@ -11,6 +11,6 @@ dist/
 test_data/
 *.log
 .claude/
-docs/superpowers/
+docs/superpowers/plans/
 !data/documents/.gitkeep
 !storage/chroma/.gitkeep
