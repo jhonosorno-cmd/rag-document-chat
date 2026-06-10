@@ -159,6 +159,10 @@ def chat_loop(engine, questions: list):
             if 0 <= idx < len(questions):
                 user_input = questions[idx]
                 console.print(f"  [muted]→ {user_input}[/muted]")
+            else:
+                console.print(f"  [muted]Número fuera de rango (1–{len(questions)})[/muted]")
+                console.print()
+                continue
 
         if user_input.startswith("/"):
             parts = user_input[1:].split(" ", 1)
