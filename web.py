@@ -76,7 +76,7 @@ def build_app(demo_vertical=None):
             {"role": "assistant", "content": answer},
         ]
 
-    with gr.Blocks(title="Forbin Document Chat", theme=gr.themes.Soft()) as app:
+    with gr.Blocks(title="Forbin Document Chat") as app:
         gr.Markdown("# 🤖 Forbin Document Chat\n*Consultá tus documentos en lenguaje natural*")
 
         if demo_vertical and questions:
@@ -96,7 +96,7 @@ def build_app(demo_vertical=None):
                 )
 
             with gr.Column(scale=2):
-                chatbot = gr.Chatbot(label="Chat", height=420, type="messages")
+                chatbot = gr.Chatbot(label="Chat", height=420)
 
         with gr.Row():
             msg_box = gr.Textbox(
@@ -141,7 +141,7 @@ def main():
     args = parser.parse_args()
 
     app = build_app(demo_vertical=args.demo)
-    app.launch(server_port=args.port, share=args.share)
+    app.launch(server_port=args.port, share=args.share, theme=gr.themes.Soft())
 
 
 if __name__ == "__main__":
