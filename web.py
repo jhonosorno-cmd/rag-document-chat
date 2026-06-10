@@ -48,29 +48,33 @@ def build_app(demo_vertical=None):
             return get_doc_list(), history
         src = Path(file_path)
         if src.suffix.lower() not in (".pdf", ".txt"):
-            history = list(history) + [
-                (None, f"⚠️ Tipo de archivo no permitido: '{src.suffix}'. Solo se aceptan PDF y TXT.")
+            return get_doc_list(), list(history) + [
+                {"role": "assistant", "content": f"⚠️ Tipo de archivo no permitido: '{src.suffix}'. Solo se aceptan PDF y TXT."}
             ]
-            return get_doc_list(), history
         DOCS_DIR.mkdir(parents=True, exist_ok=True)
         dest = DOCS_DIR / src.name
         shutil.copy2(src, dest)
         engine.ingest_document(str(dest))
-        history = list(history) + [(None, f"✅ Documento '{src.name}' cargado e indexado correctamente.")]
-        return get_doc_list(), history
+        return get_doc_list(), list(history) + [
+            {"role": "assistant", "content": f"✅ Documento '{src.name}' cargado e indexado correctamente."}
+        ]
 
     def respond(message: str, history: list) -> list:
         if not message.strip():
             return history
         if not engine.list_documents():
-            history.append((message, "⚠️ No hay documentos cargados. Subí un PDF o TXT primero."))
-            return history
+            return list(history) + [
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": "⚠️ No hay documentos cargados. Subí un PDF o TXT primero."},
+            ]
         result = engine.query(message)
         answer = result["answer"]
         if result["sources"]:
             answer += f"\n\n📎 *Fuente: {', '.join(result['sources'])}*"
-        history.append((message, answer))
-        return history
+        return list(history) + [
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": answer},
+        ]
 
     with gr.Blocks(title="Forbin Document Chat", theme=gr.themes.Soft()) as app:
         gr.Markdown("# 🤖 Forbin Document Chat\n*Consultá tus documentos en lenguaje natural*")
@@ -92,7 +96,7 @@ def build_app(demo_vertical=None):
                 )
 
             with gr.Column(scale=2):
-                chatbot = gr.Chatbot(label="Chat", height=420)
+                chatbot = gr.Chatbot(label="Chat", height=420, type="messages")
 
         with gr.Row():
             msg_box = gr.Textbox(
