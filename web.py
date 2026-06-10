@@ -11,9 +11,6 @@ import gradio as gr
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-DOCS_DIR = Path("data/documents")
-
-
 def load_demo_questions(vertical: str) -> list:
     path = Path(f"demo/{vertical}/preguntas.txt")
     if not path.exists():
@@ -33,7 +30,9 @@ def load_demo_docs(engine, vertical: str):
 
 def build_app(demo_vertical=None):
     from app.rag_engine import RAGEngine
+    from app.config import settings as cfg
     engine = RAGEngine()
+    DOCS_DIR = Path(cfg.documents_dir)
 
     if demo_vertical:
         load_demo_docs(engine, demo_vertical)
@@ -44,15 +43,21 @@ def build_app(demo_vertical=None):
         docs = engine.list_documents()
         return "\n".join(f"• {d}" for d in sorted(docs)) if docs else "Sin documentos aún."
 
-    def upload_file(file_path):
+    def upload_file(file_path, history: list):
         if not file_path:
-            return get_doc_list(), []
+            return get_doc_list(), history
         src = Path(file_path)
+        if src.suffix.lower() not in (".pdf", ".txt"):
+            history = list(history) + [
+                (None, f"⚠️ Tipo de archivo no permitido: '{src.suffix}'. Solo se aceptan PDF y TXT.")
+            ]
+            return get_doc_list(), history
         DOCS_DIR.mkdir(parents=True, exist_ok=True)
         dest = DOCS_DIR / src.name
         shutil.copy2(src, dest)
         engine.ingest_document(str(dest))
-        return get_doc_list(), []
+        history = list(history) + [(None, f"✅ Documento '{src.name}' cargado e indexado correctamente.")]
+        return get_doc_list(), history
 
     def respond(message: str, history: list) -> list:
         if not message.strip():
@@ -103,7 +108,7 @@ def build_app(demo_vertical=None):
 
         file_input.change(
             fn=upload_file,
-            inputs=file_input,
+            inputs=[file_input, chatbot],
             outputs=[doc_list, chatbot],
         )
         send_btn.click(
