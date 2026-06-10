@@ -1,60 +1,22 @@
 # rag-document-chat
 
-A production-ready RAG (Retrieval-Augmented Generation) REST API that lets you upload PDF and TXT documents and query them in natural language. Built as a portfolio project demonstrating a full AI pipeline with FastAPI, LlamaIndex, and ChromaDB.
+A production-ready RAG (Retrieval-Augmented Generation) system that lets you upload PDF and TXT documents and query them in natural language. Includes a REST API, a terminal CLI with FORBIN branding, and a Gradio web UI with demo modes for consulting pitches.
 
-## What it does
+Built as a portfolio project demonstrating a full AI pipeline with FastAPI, LlamaIndex, and ChromaDB.
 
-Upload your documents, ask questions, get answers grounded in the document content — not hallucinations.
+## Interfaces
 
-```
-POST /upload   → ingest a PDF or TXT into the vector store
-POST /query    → ask a question, get an answer + source references
-GET  /documents → list all indexed documents
-DELETE /documents/{id} → remove a document from the index
-```
-
-## Architecture
-
-```
-User
- │
- ▼
-FastAPI (REST API)
- │
- ▼
-LlamaIndex
- ├── SimpleDirectoryReader  → loads PDFs and TXTs
- ├── SentenceSplitter       → 512-token chunks, 50-token overlap
- ├── HuggingFace Embeddings → BAAI/bge-base-en-v1.5 (local, free)
- └── VectorStoreIndex       → retrieval + LLM generation
- │
- ▼
-ChromaDB (persistent local vector store)
- │
- ▼
-LLM
- ├── DEV:  Groq  → Llama 3.3 70B (free)
- └── PROD: Anthropic → Claude Sonnet
-```
-
-## Stack
-
-| Component | Technology |
-|---|---|
-| API | FastAPI 0.115 |
-| RAG pipeline | LlamaIndex 0.14 |
-| Vector store | ChromaDB 1.x |
-| Embeddings | `BAAI/bge-base-en-v1.5` (local) |
-| LLM (dev) | Groq `llama-3.3-70b-versatile` |
-| LLM (prod) | Anthropic Claude Sonnet |
-| Validation | Pydantic v2 |
-| Testing | pytest + pytest-asyncio |
+| Interface | Command | Best for |
+|---|---|---|
+| REST API | `uvicorn app.main:app --reload` | Developers, integrations |
+| Terminal CLI | `python chat.py` | Local use, consulting demos |
+| Web UI | `python web.py` | Non-technical users, client meetings |
 
 ## Quick start
 
 ```bash
 # 1. Clone and create virtual environment
-git clone https://github.com/your-username/rag-document-chat
+git clone https://github.com/jhonosorno-cmd/rag-document-chat
 cd rag-document-chat
 python -m venv venv
 venv\Scripts\activate       # Windows
@@ -67,13 +29,45 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env and add your GROQ_API_KEY (free at console.groq.com)
 
-# 4. Run the server
-uvicorn app.main:app --reload
+# 4. Pick your interface
+uvicorn app.main:app --reload   # REST API → http://localhost:8000/docs
+python chat.py                  # Terminal CLI
+python web.py                   # Web UI → http://localhost:7860
 ```
 
-API docs available at `http://localhost:8000/docs`
+## Terminal CLI
 
-## API usage
+```bash
+python chat.py                   # Normal mode
+python chat.py --demo legal      # Demo mode — legal vertical
+python chat.py --demo industrial # Demo mode — industrial vertical
+```
+
+Commands inside the CLI:
+
+| Command | Action |
+|---|---|
+| `/upload <path>` | Add a PDF or TXT to the index |
+| `/list` | Show indexed documents |
+| `/delete <name>` | Remove a document |
+| `/demo legal\|industrial` | Load demo docs + suggested questions |
+| `1`–`9` | Send the Nth suggested demo question |
+| `/clear` | Clear screen |
+| `/help` | Show command list |
+| `/quit` | Exit |
+
+## Web UI
+
+```bash
+python web.py                    # Local → http://localhost:7860
+python web.py --demo legal       # With demo panel and suggested questions
+python web.py --share            # Public Gradio URL (for remote demos)
+python web.py --port 8080        # Custom port (also reads PORT env var)
+```
+
+Two-column layout: document upload + index on the left, chat on the right.
+
+## REST API
 
 **Upload a document**
 ```bash
@@ -96,6 +90,47 @@ curl http://localhost:8000/documents
 # [{"filename":"contract.pdf","id":"contract.pdf"}]
 ```
 
+Swagger UI available at `http://localhost:8000/docs`.
+
+## Architecture
+
+```
+User
+ │
+ ├── chat.py (CLI)  ──┐
+ ├── web.py (Gradio) ─┤
+ └── FastAPI (REST) ──┤
+                      ▼
+                 RAGEngine (LlamaIndex)
+                  ├── SimpleDirectoryReader  → loads PDFs and TXTs
+                  ├── SentenceSplitter       → 512-token chunks, 50-token overlap
+                  ├── HuggingFace Embeddings → BAAI/bge-base-en-v1.5 (local, free)
+                  └── VectorStoreIndex       → retrieval + LLM generation
+                      │
+                      ▼
+                 ChromaDB (persistent local vector store)
+                      │
+                      ▼
+                 LLM
+                  ├── DEV:  Groq  → Llama 3.3 70B (free)
+                  └── PROD: Anthropic → Claude Sonnet
+```
+
+## Stack
+
+| Component | Technology |
+|---|---|
+| API | FastAPI 0.115 |
+| RAG pipeline | LlamaIndex 0.14 |
+| Vector store | ChromaDB 1.x |
+| Embeddings | `BAAI/bge-base-en-v1.5` (local) |
+| LLM (dev) | Groq `llama-3.3-70b-versatile` |
+| LLM (prod) | Anthropic Claude Sonnet |
+| CLI | rich |
+| Web UI | Gradio 6.x |
+| Validation | Pydantic v2 |
+| Testing | pytest + pytest-asyncio |
+
 ## Switching LLM provider
 
 The switch is a single env var — no code changes needed:
@@ -114,7 +149,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ```bash
 pytest tests/
-# 15 passed in ~3s
+# 18 passed
 ```
 
 ## Design decisions
@@ -125,7 +160,9 @@ pytest tests/
 
 **Provider abstraction** — `LLM_PROVIDER` in `.env` is the only switch. `rag_engine.py` instantiates the right LlamaIndex client at startup.
 
-**Security** — uploaded filenames are sanitized to prevent path traversal. Only `data/documents/` is writable by the upload endpoint.
+**Security** — uploaded filenames are sanitized to prevent path traversal. Extension validated server-side in both the REST API and the web UI.
+
+**Demo mode** — `demo/legal/` and `demo/industrial/` hold pre-loaded documents and suggested questions per vertical. Designed for consulting pitches where both a non-technical gerente and a CTO are in the room.
 
 ## Use cases for SMBs
 
@@ -136,4 +173,4 @@ pytest tests/
 
 ---
 
-*Built with [LlamaIndex](https://www.llamaindex.ai/) · [FastAPI](https://fastapi.tiangolo.com/) · [ChromaDB](https://www.trychroma.com/)*
+*Built with [LlamaIndex](https://www.llamaindex.ai/) · [FastAPI](https://fastapi.tiangolo.com/) · [ChromaDB](https://www.trychroma.com/) · [Gradio](https://www.gradio.app/)*
