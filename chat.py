@@ -151,6 +151,7 @@ def handle_upload(engine, path_str: str):
         return
 
     dest = DOCS_DIR / src.name
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
     with Live(
         Spinner("dots", text=Text(f" Ingiriendo {src.name}...", style="muted")),
         console=console,
@@ -186,7 +187,7 @@ def handle_delete(engine, name: str):
         console.print()
         return
 
-    name = name.strip()
+    name = Path(name.strip()).name
     with Live(
         Spinner("dots", text=Text(f" Eliminando {name}...", style="muted")),
         console=console,
