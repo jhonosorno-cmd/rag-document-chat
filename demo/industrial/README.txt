@@ -1,0 +1,14 @@
+DEMO — Sector Industrial
+========================
+
+Antes de la reunión:
+1. Copiá 1-2 manuales técnicos a esta carpeta como .pdf o .txt
+2. Corré:  python chat.py --demo industrial
+           python web.py --demo industrial
+
+Durante la demo:
+- CLI:  el cliente ve la terminal en tu pantalla
+- Web:  compartí la pantalla mostrando http://localhost:7860
+
+Para limpiar entre clientes:
+  python chat.py  →  /list  →  /delete <nombre> por cada documento
