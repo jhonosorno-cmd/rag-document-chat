@@ -4,12 +4,9 @@ Forbin Document Chat — web interface
 import argparse
 import os
 import shutil
-import sys
 from pathlib import Path
 
 import gradio as gr
-
-sys.path.insert(0, str(Path(__file__).parent))
 
 def load_demo_questions(vertical: str) -> list:
     path = Path(f"demo/{vertical}/preguntas.txt")
@@ -67,7 +64,15 @@ def build_app(demo_vertical=None):
                 {"role": "user", "content": message},
                 {"role": "assistant", "content": "⚠️ No hay documentos cargados. Subí un PDF o TXT primero."},
             ]
-        result = engine.query(message)
+        history_clean = [
+            {
+                "role": m["role"],
+                "content": m["content"] if isinstance(m["content"], str)
+                else " ".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in m["content"]),
+            }
+            for m in history
+        ]
+        result = engine.query(message, chat_history=history_clean)
         answer = result["answer"]
         if result["sources"]:
             answer += f"\n\n📎 *Fuente: {', '.join(result['sources'])}*"

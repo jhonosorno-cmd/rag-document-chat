@@ -40,14 +40,14 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
 
 @app.post("/query", response_model=QueryResponse)
 async def query_documents(request: Request, body: QueryRequest):
-    result = request.app.state.rag.query(body.question)
+    result = request.app.state.rag.query(body.question, body.chat_history)
     return QueryResponse(answer=result["answer"], sources=result["sources"])
 
 
 @app.get("/documents", response_model=list[DocumentInfo])
 async def list_documents(request: Request):
     docs = request.app.state.rag.list_documents()
-    return [DocumentInfo(filename=d, id=d) for d in docs]
+    return [DocumentInfo(filename=d) for d in docs]
 
 
 @app.delete("/documents/{filename}")

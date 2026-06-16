@@ -1,20 +1,18 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
 class QueryRequest(BaseModel):
     question: str
+    chat_history: list[dict] = []
 
 
 class QueryResponse(BaseModel):
     answer: str
-    sources: List[str] = []
+    sources: list[str] = []
 
 
 class DocumentInfo(BaseModel):
     filename: str
-    id: str
 
 
 class UploadResponse(BaseModel):
