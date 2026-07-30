@@ -1,5 +1,7 @@
 # rag-document-chat
 
+![CI](https://github.com/jhonosorno-cmd/rag-document-chat/actions/workflows/ci.yml/badge.svg)
+
 A production-ready RAG (Retrieval-Augmented Generation) system that lets you upload PDF and TXT documents and query them in natural language. Includes a REST API, a terminal CLI with FORBIN branding, and a Gradio web UI with demo modes for consulting pitches.
 
 Built as a portfolio project demonstrating a full AI pipeline with FastAPI, LlamaIndex, and ChromaDB.

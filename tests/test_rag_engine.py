@@ -77,14 +77,19 @@ class TestRAGEngineIngest:
              patch("app.rag_engine.ChromaVectorStore"), \
              patch("app.rag_engine.VectorStoreIndex") as mock_index_cls, \
              patch("app.rag_engine.StorageContext"), \
-             patch("app.rag_engine.SimpleDirectoryReader") as mock_reader, \
+             patch("app.rag_engine.fitz") as mock_fitz, \
              patch("app.rag_engine.SentenceSplitter") as mock_splitter:
 
             mock_chroma.return_value.get_or_create_collection.return_value = MagicMock()
             mock_index = MagicMock()
             mock_index_cls.from_vector_store.return_value = mock_index
 
-            mock_reader.return_value.load_data.return_value = [MagicMock()]
+            mock_page = MagicMock()
+            mock_page.get_text.return_value = "some text"
+            mock_pdf = MagicMock()
+            mock_pdf.__iter__.return_value = iter([mock_page])
+            mock_fitz.open.return_value = mock_pdf
+
             mock_splitter.return_value.get_nodes_from_documents.return_value = [
                 MagicMock(), MagicMock(), MagicMock()
             ]
